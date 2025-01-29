@@ -54,14 +54,14 @@ Open index.html in your browser to view the visualization.
 Project Structure
 
 leaflet-challenge/
-│── Leaflet-Part-1/
-│   ├── index.html        # Main HTML file
-│   ├── static/
-│   │   ├── css/
-│   │   │   ├── style.css # Styling file
-│   │   ├── js/
-│   │   │   ├── logic.js  # JavaScript for data visualization
-│── Leaflet-Part-2/ (Optional enhancements)
+Leaflet-Part-1/
+index.html        # Main HTML file
+static/
+ css/
+style.css # Styling file
+js/
+logic.js  # JavaScript for data visualization
+
 
 # Future Enhancements
 
