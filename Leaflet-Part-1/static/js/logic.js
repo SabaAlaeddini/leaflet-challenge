@@ -1,84 +1,98 @@
-// Create the 'basemap' tile layer that will be the background of our map.
+// Store the API endpoint to a variable
+let url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson"
 
-
-// OPTIONAL: Step 2
-// Create the 'street' tile layer as a second background of the map
-
-
-// Create the map object with center and zoom options.
-
-
-// Then add the 'basemap' tile layer to the map.
-
-// OPTIONAL: Step 2
-// Create the layer groups, base maps, and overlays for our two sets of data, earthquakes and tectonic_plates.
-// Add a control to the map that will allow the user to change which layers are visible.
-
-
-// Make a request that retrieves the earthquake geoJSON data.
-d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson").then(function (data) {
-
-  // This function returns the style data for each of the earthquakes we plot on
-  // the map. Pass the magnitude and depth of the earthquake into two separate functions
-  // to calculate the color and radius.
-  function styleInfo(feature) {
-
-  }
-
-  // This function determines the color of the marker based on the depth of the earthquake.
-  function getColor(depth) {
-
-  }
-
-  // This function determines the radius of the earthquake marker based on its magnitude.
-  function getRadius(magnitude) {
-
-  }
-
-  // Add a GeoJSON layer to the map once the file is loaded.
-  L.geoJson(data, {
-    // Turn each feature into a circleMarker on the map.
-    pointToLayer: function (feature, latlng) {
-
-    },
-    // Set the style for each circleMarker using our styleInfo function.
-    style: styleInfo,
-    // Create a popup for each marker to display the magnitude and location of the earthquake after the marker has been created and styled
-    onEachFeature: function (feature, layer) {
-
-    }
-  // OPTIONAL: Step 2
-  // Add the data to the earthquake layer instead of directly to the map.
-  }).addTo(map);
-
-  // Create a legend control object.
-  let legend = L.control({
-    position: "bottomright"
-  });
-
-  // Then add all the details for the legend
-  legend.onAdd = function () {
-    let div = L.DomUtil.create("div", "info legend");
-
-    // Initialize depth intervals and colors for the legend
-
-
-    // Loop through our depth intervals to generate a label with a colored square for each interval.
-
-
-    return div;
-  };
-
-  // Finally, add the legend to the map.
-
-
-  // OPTIONAL: Step 2
-  // Make a request to get our Tectonic Plate geoJSON data.
-  d3.json("https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json").then(function (plate_data) {
-    // Save the geoJSON data, along with style information, to the tectonic_plates layer.
-
-
-    // Then add the tectonic_plates layer to the map.
-
-  });
+// Perform a get reuqest to the URL and 
+d3.json(url).then(function(data) {
+    // Once we get a response, send the data.features object to the createFeatures function.
+    createFeatures(data.features);
 });
+
+// Create function to determine circle marker color
+function circleColor(depth) {
+    // Depth ranges and associated colors
+    if (depth >= -10 && depth <= 10){
+        return '#79ff2f'; }
+        else if  (depth > 10 && depth <= 30){
+            return "#e1ff2f"; }
+            else if  (depth > 30 && depth <= 50){
+                return "#ffc762"; }
+                else if  (depth > 50 && depth <= 70){
+                    return  "#ffb52f"; }
+                    else if  (depth > 70 && depth <= 90){
+                        return "#ff6349"; }
+                        else return  "#ff3716"; }
+
+// Create function to create features: Circle markers and Pop ups
+function createFeatures(earthquakeData) {
+      // Create a GeoJSON layer that contains the features array from the earthquake data
+    let earthquakes = L.geoJson(earthquakeData, {
+
+        //  Convert each feature into a circle marker
+        pointToLayer: function(feature, latlng) {
+            return L.circleMarker(latlng, {
+                radius: feature.properties.mag*5, // Circle size proportional to magnitude
+                fillColor: circleColor(feature.geometry.coordinates[2]), // Color based on depth
+                color: "#000", // Black border for circles
+                fillOpacity:1, // Fully filled
+                weight:0.75, // Border thickness
+                              
+            });
+        },
+         // Add popups to each feature with relevant information
+        onEachFeature: function(feature, layer) {
+            layer.bindPopup(`Magnitude: ${feature.properties.mag}<br>Depth: ${feature.geometry.coordinates[2]} km<br>Location: ${feature.properties.place}`)
+        }
+});// Send earthquakes layer to the createMap function/
+    createMap(earthquakes);
+
+}
+
+function createMap(earthquakes) {
+    // Create the base layers.
+    let street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+    });
+     // Create map, giving it the streetmap and earthquakes layers to display on load.
+    let myMap = L.map("map", {
+     center: [38.7946, -106.5348],
+    zoom: 6,
+    layers: [street, earthquakes] // Add base layer(street) and earthquakes layer on load 
+  
+    })
+    // Add legend to the map
+ let legend = L.control({ position: "bottomright" });
+
+ legend.onAdd = function () {
+   let div = L.DomUtil.create("div", "info legend");
+   div.style.backgroundColor = "#ffffff";
+   div.style.padding = "10px";
+   div.style.borderRadius = "5px";
+   
+
+   // Define the depth ranges and corresponding colors
+   let depthRanges = [
+     { range: "-10 to 10", color: "#79ff2f" },
+     { range: "10 to 30", color: "#e1ff2f" },
+     { range: "30 to 50", color: "#ffc762" },
+     { range: "50 to 70", color: "#ffb52f" },
+     { range: "70 to 90", color: "#ff6349" },
+     { range: "90+", color: "#ff3716" }
+   ];
+
+   // Generate legend content
+   depthRanges.forEach((item) => {
+    div.innerHTML +=
+      `<div style="display: flex; align-items: center; margin-bottom: 4px;">
+      <i style="background: ${item.color}; width: 16px; height: 16px; display: inline-block; margin-right: 6px;"></i>` +
+     `<span>${item.range}</span>`
+ 
+  });
+
+   return div;
+ };
+
+ // Add the legend to the map
+ legend.addTo(myMap);
+    
+
+}
